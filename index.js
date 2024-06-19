@@ -26,6 +26,8 @@ async function run() {
         await client.connect();
 
         const jobCollection = client.db('chakriBazarDB').collection('jobs');
+        const allJobsCollection = client.db('chakriBazarDB').collection('allJobs');
+        const allAppliedJobsCollection = client.db('chakriBazarDB').collection('appliedJobs');
 
         app.get('/addedJobs', async (req, res) => {
             const cursor = jobCollection.find();
@@ -65,6 +67,47 @@ async function run() {
                 }
             }
             const result = await jobCollection.updateOne(filter, jobs, options);
+            res.send(result);
+        })
+
+        app.delete('/addedJobs/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) };
+            const result = await jobCollection.deleteOne(query);
+            res.send(result);
+        })
+
+        app.get('/allJobs', async (req, res) => {
+            const cursor = allJobsCollection.find();
+            const result = await cursor.toArray();
+            res.send(result);
+        })
+
+        app.get('/allJobs/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) };
+            const result = await allJobsCollection.findOne(query);
+            res.send(result);
+        })
+
+        app.patch('/allJobs/:id', async (req, res) => {
+            const user = req.body;
+            console.log(user);
+            const id = user._id;
+            const filter = { _id: new ObjectId(id) };
+            const updateDoc = {
+                $set: {
+                    numberOfApplicants: user.numberOfApplicants
+                }
+            }
+            const result = await allJobsCollection.updateOne(filter, updateDoc);
+            res.send(result);
+        })
+
+        app.post('/appliedJobs', async (req, res) => {
+            const appliedJob = req.body;
+            console.log(appliedJob);
+            const result = await allAppliedJobsCollection.insertOne(appliedJob);
             res.send(result);
         })
 
