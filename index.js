@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const app = express();
 const port = process.env.PORT || 5000;
 
@@ -27,16 +27,44 @@ async function run() {
 
         const jobCollection = client.db('chakriBazarDB').collection('jobs');
 
-        app.get('/addJobs', async (req, res) => {
+        app.get('/addedJobs', async (req, res) => {
             const cursor = jobCollection.find();
             const result = await cursor.toArray();
             res.send(result)
         })
 
-        app.post('/addJobs', async (req, res) => {
+        app.get('/addedJobs/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) };
+            const result = await jobCollection.findOne(query);
+            res.send(result);
+        })
+
+        app.post('/addedJobs', async (req, res) => {
             const newjob = req.body;
             console.log(newjob);
             const result = await jobCollection.insertOne(newjob);
+            res.send(result);
+        })
+
+        app.put('/addedJobs/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: new ObjectId(id) };
+            const options = { upsert: true };
+            const updatedJobs = req.body;
+            const jobs = {
+                $set: {
+                    image: updatedJobs.image,
+                    job_name: updatedJobs.job_name,
+                    jobCategory_name: updatedJobs.jobCategory_name,
+                    salary_range: updatedJobs.salary_range,
+                    job_description: updatedJobs.job_description,
+                    job_posted_at: updatedJobs.job_posted_at,
+                    deadline: updatedJobs.deadline,
+                    applicants_number: updatedJobs.applicants_number
+                }
+            }
+            const result = await jobCollection.updateOne(filter, jobs, options);
             res.send(result);
         })
 
