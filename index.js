@@ -25,14 +25,35 @@ async function run() {
         // Connect the client to the server	(optional starting in v4.7)
         await client.connect();
 
+        const jobJsonCollection = client.db('chakriBazarDB').collection('jobsJson');
+        const blogsCollection = client.db('chakriBazarDB').collection('blogsData');
         const jobCollection = client.db('chakriBazarDB').collection('jobs');
         const allJobsCollection = client.db('chakriBazarDB').collection('allJobs');
         const allAppliedJobsCollection = client.db('chakriBazarDB').collection('appliedJobs');
 
+        app.get('/jobsJson', async (req, res) => {
+            const cursor = jobJsonCollection.find();
+            const result = await cursor.toArray();
+            res.send(result);
+        })
+
+        app.get('/jobsJson/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) };
+            const result = await jobJsonCollection.findOne(query);
+            res.send(result);
+        })
+
+        app.get('/blogsData', async (req, res) => {
+            const cursor = blogsCollection.find();
+            const result = await cursor.toArray();
+            res.send(result);
+        })
+
         app.get('/addedJobs', async (req, res) => {
             const cursor = jobCollection.find();
             const result = await cursor.toArray();
-            res.send(result)
+            res.send(result);
         })
 
         app.get('/addedJobs/:id', async (req, res) => {
@@ -40,6 +61,12 @@ async function run() {
             const query = { _id: new ObjectId(id) };
             const result = await jobCollection.findOne(query);
             res.send(result);
+        })
+
+        app.get('/appliedJobs', async (req, res) => {
+            const cursor = allAppliedJobsCollection.find();
+            const result = await cursor.toArray();
+            res.send(result)
         })
 
         app.post('/addedJobs', async (req, res) => {
@@ -77,9 +104,16 @@ async function run() {
             res.send(result);
         })
 
+        app.get('/allJobsCount', async (req, res) => {
+            const count = await allJobsCollection.estimatedDocumentCount();
+            res.send({ count });
+        })
+
         app.get('/allJobs', async (req, res) => {
-            const cursor = allJobsCollection.find();
-            const result = await cursor.toArray();
+            const page = parseInt(req.query.page);
+            const size = parseInt(req.query.size);
+            console.log(page, size);
+            const result = await allJobsCollection.find().skip(page * size).limit(size).toArray();
             res.send(result);
         })
 
